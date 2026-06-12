@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance UI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0b0b0b;
+    --card: #151515;
+    --border: #2a2a2a;
+    --text: #ffffff;
+    --muted: #9ca3af;
+    --accent: #3b82f6;
+    --green: #22c55e;
+    --red: #ef4444;
+}
+body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 30px; }
+.title { font-size: 22px; font-weight: 700; }
+.subtitle { font-size: 14px; color: var(--muted); margin-top: 5px; }
+.filters { display: flex; align-items: center; gap: 14px; margin-top: 25px; flex-wrap: wrap; }
+.filters label { font-size: 14px; color: var(--muted); }
+.input, select { background: #111; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: white; outline: none; font-family: 'Inter', sans-serif; font-size: 14px; }
+.input:focus { border-color: var(--accent); }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+.search { width: 200px; }
+.card { margin-top: 25px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.card-header { padding: 18px 20px; font-weight: 600; border-bottom: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 14px 20px; font-size: 12px; color: var(--muted); background: #111; text-transform: uppercase; }
+td { padding: 20px; border-top: 1px solid var(--border); text-align: center; }
+.loading { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
+.loader { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--accent); border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.badge-present { background: rgba(34,197,94,0.15); color: #22c55e; }
+.badge-absent  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.badge-paid    { background: rgba(34,197,94,0.15);  color: #22c55e; }
+.badge-unpaid  { background: rgba(239,68,68,0.15);  color: #ef4444; }
+.action-btn { border: none; padding: 7px 13px; border-radius: 7px; font-size: 12px; cursor: pointer; color: white; margin: 0 3px; transition: opacity 0.2s; }
+.action-btn:hover { opacity: 0.8; }
+.action-btn.present { background: var(--green); }
+.action-btn.absent  { background: var(--red); }
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div style="margin-bottom:14px;">
+    <button onclick="window.location.href='gym_owner_panel.html'" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e1e1e;color:#a0a0a0;border:1px solid #2a2a2a;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;" onmouseover="this.style.borderColor='#666'" onmouseout="this.style.borderColor='#2a2a2a'">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Dashboard
+    </button>
+</div>
+
+<div class="title">Zumba Attendance Management</div>
+<div class="subtitle">View and edit Zumba member attendance</div>
+
+<div class="filters">
+    <label>Date:</label>
+    <input type="date" class="input" id="dateInput">
+    <label>Status:</label>
+    <select id="statusFilter">
+        <option value="All">All</option>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+    </select>
+    <input type="text" class="input search" id="searchInput" placeholder="Search name / ID…">
+</div>
+
+<div class="card">
+    <div class="card-header" id="cardHeader">Attendance</div>
+    <table>
+        <thead>
+            <tr>
+                <th>POWER ID</th>
+                <th>NAME</th>
+                <th>PACKAGE</th>
+                <th>FEE STATUS</th>
+                <th>ATTENDANCE</th>
+                <th>TIME</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr><td colspan="7" class="loading"><span class="loader"></span> Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- JS is in attendance.js — linked below -->
+<script type="module" src="zumba_attendance.js"></script>
+
+</body>
+</html>

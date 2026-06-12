@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zumba Records</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg-primary:#0a0a0a;--bg-secondary:#111111;--bg-card:#161616;--bg-hover:#1e1e1e;--border:#2a2a2a;--text-primary:#ffffff;--text-secondary:#a0a0a0;--text-muted:#666666;--accent:#3b82f6;--accent-hover:#2563eb;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444;--purple:#8b5cf6;--zumba:#ec4899;--zumba-hover:#db2777}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;padding:30px}
+.page-header{margin-bottom:30px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.page-title{font-size:1.5rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.page-subtitle{color:var(--text-secondary);font-size:0.9rem;margin-top:4px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin-bottom:24px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.stat-label{font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.stat-value{font-size:2rem;font-weight:700}
+.stat-value.success{color:var(--success)}.stat-value.danger{color:var(--danger)}.stat-value.warning{color:var(--warning)}.stat-value.accent{color:var(--accent)}.stat-value.purple{color:var(--purple)}.stat-value.zumba{color:var(--zumba)}
+.table-container{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.table-title{font-size:1rem;font-weight:600}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{padding:14px 20px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{background:var(--bg-secondary);font-size:.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+tr:hover{background:var(--bg-hover)}tr:last-child td{border-bottom:none}
+.btn{padding:10px 18px;border-radius:8px;font-size:.85rem;font-weight:500;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{background:var(--bg-hover);color:var(--text-primary);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--text-muted)}
+.btn-zumba{background:var(--zumba);color:white}.btn-zumba:hover{background:var(--zumba-hover)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.form-input{padding:10px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-size:.9rem;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--accent)}
+.badge{padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600;text-transform:uppercase}
+.badge-paid{background:rgba(34,197,94,.15);color:var(--success)}
+.badge-unpaid{background:rgba(239,68,68,.15);color:var(--danger)}
+.tab-bar{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:10px;overflow:hidden;width:fit-content;}
+.tab-bar .btn{border-radius:0;border:none}
+.tab-bar .btn+.btn{border-left:1px solid var(--border)}
+.toast{position:fixed;bottom:30px;right:30px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px;transform:translateY(100px);opacity:0;transition:all .3s;z-index:2000}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:var(--success)}.toast.error{border-color:var(--danger)}
+</style>
+</head>
+<body>
+
+<div style="margin-bottom:18px;">
+  <button onclick="window.location.href='gym_owner_panel.html'" class="btn btn-secondary" style="font-size:0.8rem;padding:7px 14px;gap:6px;">
+    <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to Panel
+  </button>
+</div>
+<div class="page-header">
+  <div>
+    <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;letter-spacing:0.05em;text-transform:uppercase;">GYM Admin Panel &rsaquo; Reports</div>
+    <div class="page-title">Reports</div>
+    <div class="page-subtitle">Generate and view reports</div>
+  </div>
+</div>
+
+<!-- GYM / ZUMBA SWITCHER -->
+<div style="display:flex;gap:10px;margin-bottom:20px;">
+  <button id="branchGym" class="btn btn-secondary" style="padding:10px 24px;font-size:.95rem;font-weight:600;border-radius:8px;" onclick="switchBranch('gym')">🏋️ GYM</button>
+  <button id="branchZumba" class="btn btn-primary" style="padding:10px 24px;font-size:.95rem;font-weight:600;border-radius:8px;background:var(--zumba);" onclick="switchBranch('zumba')">💃 Zumba</button>
+</div>
+
+<!-- Report Type Tabs -->
+<div class="tab-bar">
+  <button id="zTabAttendance" class="btn btn-zumba" style="padding:10px 22px;font-size:.9rem;" onclick="switchTab('attendance')">Attendance Report</button>
+  <button id="zTabFees" class="btn btn-secondary" style="padding:10px 22px;font-size:.9rem;" onclick="switchTab('fees')">Fees Report</button>
+  <button id="zTabGrowth" class="btn btn-secondary" style="padding:10px 22px;font-size:.9rem;" onclick="switchTab('growth')">📈 Growth Charts</button>
+  <button id="zTabCrowd" class="btn btn-secondary" style="padding:10px 22px;font-size:.9rem;" onclick="switchTab('crowd')">👥 Crowd Analysis</button>
+</div>
+
+<!-- ══ ATTENDANCE PANEL ══ -->
+<div id="panelAttendance">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+    <label style="color:var(--text-secondary);font-size:.9rem;">Month:</label>
+    <input type="month" id="zRptMonthPicker" class="form-input" style="width:180px;" onchange="zUpdateReports()"/>
+    <button class="btn btn-zumba" onclick="zExportAttendanceReport()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export to Excel
+    </button>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card"><div class="stat-label">Active Members</div><div class="stat-value zumba" id="zRptActiveMembers">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Present (Month)</div><div class="stat-value success" id="zRptTotalPresent">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Absent (Month)</div><div class="stat-value danger" id="zRptTotalAbsent">—</div></div>
+    <div class="stat-card"><div class="stat-label">Perfect Attendance</div><div class="stat-value purple" id="zRptPerfectAttendance">—</div></div>
+  </div>
+  <div class="table-container" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">🏆 Top Paying Members</div>
+      <div style="font-size:.78rem;color:var(--text-muted);">Click any row to view full details</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Power ID</th><th>Name</th><th>Phone</th><th>Package</th><th>Total Paid</th></tr></thead>
+        <tbody id="zTopPayersBody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+    <div class="table-container" style="margin-bottom:0;">
+      <div class="table-header">
+        <div class="table-title">📊 Plan Distribution</div>
+        <div style="font-size:.78rem;color:var(--text-muted);">Live from Firebase</div>
+      </div>
+      <div id="zPlanDistBody" style="padding:8px 0;"></div>
+    </div>
+    <div class="table-container" style="margin-bottom:0;">
+      <div class="table-header">
+        <div class="table-title">🥇 Most & Least Popular Plans</div>
+      </div>
+      <div id="zPlanTopBotBody" style="padding:16px 20px;"></div>
+    </div>
+  </div>
+  <div class="table-container">
+    <div class="table-header"><div class="table-title">Monthly Attendance Summary</div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Power ID</th><th>Name</th><th>Package</th><th>Present Days</th><th>Absent Days</th><th>Attendance %</th><th>Days Left</th></tr></thead>
+        <tbody id="zRptAttendanceSummaryBody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FEES PANEL ══ -->
+<div id="panelFees" style="display:none;">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+    <label style="color:var(--text-secondary);font-size:.9rem;">Month:</label>
+    <input type="month" id="zRptFeesMonthPicker" class="form-input" style="width:180px;" onchange="zUpdateFeesReport()"/>
+    <button class="btn btn-zumba" onclick="zExportFeesReport()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export to Excel
+    </button>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card"><div class="stat-label">Total Members</div><div class="stat-value zumba" id="zRptTotalMembers">—</div></div>
+    <div class="stat-card"><div class="stat-label">Monthly Revenue</div><div class="stat-value success" id="zRptMonthlyRevenue">—</div></div>
+    <div class="stat-card"><div class="stat-label">Fees Pending</div><div class="stat-value danger" id="zRptUnpaidFees">—</div></div>
+  </div>
+  <div class="table-container">
+    <div class="table-header"><div class="table-title">💃 Zumba Fee Report</div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Power ID</th><th>Member</th><th>Package</th><th>Amount</th><th>Last Paid</th><th>Status</th></tr></thead>
+        <tbody id="zReportFeesBody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GROWTH PANEL ══ -->
+<div id="panelGrowth" style="display:none;">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+    <label style="color:var(--text-secondary);font-size:.9rem;">Year:</label>
+    <select id="zRptGrowthYear" class="form-input" style="width:120px;" onchange="zUpdateGrowthCharts()"></select>
+    <span style="color:var(--text-muted);font-size:.82rem;">Live Firebase data · updates automatically</span>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+    <div class="stat-card"><div class="stat-label">Best Month Revenue</div><div class="stat-value success" id="zGrowthBestRev">—</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:4px;" id="zGrowthBestRevMonth"></div></div>
+    <div class="stat-card"><div class="stat-label">Annual Revenue</div><div class="stat-value zumba" id="zGrowthAnnualRev">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Monthly Revenue</div><div class="stat-value purple" id="zGrowthAvgRev">—</div></div>
+    <div class="stat-card"><div class="stat-label">Peak New Members</div><div class="stat-value warning" id="zGrowthPeakMembers">—</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:4px;" id="zGrowthPeakMembersMonth"></div></div>
+  </div>
+  <div class="table-container" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">Monthly Zumba Revenue</div>
+      <div style="font-size:.78rem;color:var(--text-muted);">Fees collected per month</div>
+    </div>
+    <div id="zGrowthRevenueChart" style="padding:20px;"></div>
+  </div>
+  <div class="table-container" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">Monthly New Members</div>
+      <div style="font-size:.78rem;color:var(--text-muted);">Members who joined each month</div>
+    </div>
+    <div id="zGrowthMembersChart" style="padding:20px;"></div>
+  </div>
+  <div class="table-container">
+    <div class="table-header"><div class="table-title">Month-by-Month Breakdown</div></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Month</th><th>Revenue</th><th>vs Prev Month</th><th>New Members</th><th>Fees Collected</th></tr></thead>
+        <tbody id="zGrowthTableBody"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-muted);">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CROWD ANALYSIS PANEL ══ -->
+<div id="panelCrowd" style="display:none;">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+    <label style="color:var(--text-secondary);font-size:.9rem;">Month:</label>
+    <input type="month" id="zRptCrowdMonthPicker" class="form-input" style="width:180px;" onchange="zUpdateCrowdAnalysis()"/>
+    <span id="zCrowdConfigStatus" style="font-size:.78rem;color:var(--text-muted);">Loading zumba config…</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:24px;">
+    <div class="stat-card"><div class="stat-label">Peak Slot</div><div id="zCrowdSummPeak" style="font-size:1rem;font-weight:700;color:var(--danger);margin-top:6px;">—</div></div>
+    <div class="stat-card"><div class="stat-label">Quietest Slot</div><div id="zCrowdSummQuiet" style="font-size:1rem;font-weight:700;color:var(--success);margin-top:6px;">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Check-ins</div><div id="zCrowdSummTotal" class="stat-value zumba">—</div></div>
+    <div class="stat-card"><div class="stat-label">Active Days</div><div id="zCrowdSummDays" class="stat-value" style="color:var(--purple);">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Daily Check-ins</div><div id="zCrowdSummAvg" class="stat-value" style="color:var(--warning);">—</div></div>
+  </div>
+  <div class="table-container" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">🕐 Time Slot Crowd Distribution</div>
+      <div id="zCrowdSlotLabel" style="font-size:.78rem;color:var(--text-muted);">Loading…</div>
+    </div>
+    <div id="zCrowdSlotChartWrap" style="padding:20px;">
+      <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading…</div>
+    </div>
+  </div>
+  <div class="table-container" style="margin-bottom:20px;">
+    <div class="table-header">
+      <div class="table-title">📅 Day-of-Week Pattern</div>
+      <div style="font-size:.78rem;color:var(--text-muted);">Average check-ins per weekday</div>
+    </div>
+    <div style="padding:20px;">
+      <div id="zCrowdWeekChart" style="display:flex;align-items:flex-end;gap:8px;height:140px;padding:0 4px;"></div>
+    </div>
+  </div>
+  <div class="table-container">
+    <div class="table-header">
+      <div class="table-title">🗓️ Daily Check-in Heatmap</div>
+      <div style="font-size:.78rem;color:var(--text-muted);">Each column = 1 day · each row = time slot · hover for details</div>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="zCrowdHeatmapWrap"><div style="text-align:center;padding:40px;color:var(--text-muted);">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Zumba Member Detail Modal -->
+<div id="zMemberModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;min-width:340px;max-width:500px;width:90%;position:relative;">
+    <button onclick="document.getElementById('zMemberModal').style.display='none'" style="position:absolute;top:14px;right:14px;background:var(--bg-hover);border:1px solid var(--border);color:var(--text-secondary);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:1rem;">✕</button>
+    <div id="zMemberModalContent"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toastMsg"></span>
+</div>
+
+<script type="module" src="record_zumba.js"></script>
+<script>
+function switchBranch(branch) {
+  if (branch === 'gym') {
+    window.location.href = 'reports.html';
+  }
+  // 'zumba' is already the current page — do nothing
+}
+</script>
+</body>
+</html>

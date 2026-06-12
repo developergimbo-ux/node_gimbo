@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zumba Member Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d0010;
+            --bg-secondary: #160020;
+            --bg-card: #1a0025;
+            --bg-card-hover: #220030;
+            --accent: #ff0099;
+            --accent-bright: #ff4db8;
+            --accent-glow: rgba(255, 0, 153, 0.6);
+            --text-primary: #ffffff;
+            --text-secondary: #d4a0c8;
+            --text-muted: #b06090;
+            --border-color: #5a1060;
+            --present: #00ffaa;
+            --present-dim: #00e891;
+            rgba(0, 255, 170, 0.15);
+            --present-border: rgba(0, 255, 170, 0.5);
+            --present-glow: rgba(0, 255, 170, 0.5);
+            --absent: #ff2255;
+            --absent-dim: #ff2a50;
+            --absent-bg: rgba(255, 34, 85, 0.18);
+            --absent-border: rgba(255, 34, 85, 0.7);
+            --absent-glow: rgba(255, 34, 85, 0.6);
+            --energon-blue: #ff66cc;
+            --energon-glow: rgba(255, 102, 204, 0.5);
+            --streak-1: #ffb3de;
+            --streak-2: #ff66cc;
+            --streak-3: #ff1a8c;
+            --streak-4: #ff0099;
+            --streak-5: #cc0077;
+            --streak-6: #330044;
+            --graph-up: #ff66cc;
+            --graph-down: #ff4466;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(ellipse at 30% 20%, rgba(255,0,153,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(180,0,255,0.06) 0%, transparent 60%), var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .attendance-section { max-width: 800px; margin: 0 auto; padding: 30px 20px; }
+
+        .section-header { text-align: center; margin-bottom: 35px; position: relative; }
+        .section-title { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+        .section-title span {
+            background: linear-gradient(135deg, #ff0099, #ff66dd, #ff99ee);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .section-subtitle { color: var(--text-secondary); font-size: 0.95rem; }
+
+        .fullscreen-btn {
+            position: absolute; top: 0; right: 0;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 10px 16px;
+            color: var(--text-secondary); cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.85rem; font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .fullscreen-btn:hover {
+            border-color: var(--energon-blue); color: var(--energon-blue);
+            box-shadow: 0 0 20px var(--energon-glow);
+        }
+        .fullscreen-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        .day-lock-container {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 20px; margin-bottom: 24px;
+        }
+        .day-lock-label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+        .days-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+        .day-cell {
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 14px 8px; background: var(--bg-secondary); border: 2px solid var(--border-color); border-radius: 12px; transition: all 0.3s ease;
+        }
+        .day-cell.locked { opacity: 0.4; }
+        .day-cell.current { border-color: var(--accent); background: rgba(255, 0, 153, 0.15); box-shadow: 0 0 25px var(--accent-glow); }
+        .day-cell.future { opacity: 0.55; }
+        .day-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+        .day-cell.current .day-name { color: var(--accent-bright); }
+        .day-cell-status { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+        .day-cell.current .day-cell-status { color: var(--accent-bright); }
+        .lock-badge { position: absolute; top: 6px; right: 6px; width: 14px; height: 14px; color: var(--text-muted); display: none; }
+        .day-cell.locked .lock-badge { display: block; }
+        .lock-badge svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; }
+
+        .search-container { margin-bottom: 24px; }
+        .search-box { position: relative; }
+        .search-input {
+            width: 100%; padding: 16px 20px 16px 52px;
+            background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 14px;
+            color: var(--text-primary); font-size: 1rem; outline: none; transition: all 0.3s ease;
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus { border-color: var(--energon-blue); box-shadow: 0 0 0 4px var(--energon-glow); }
+        .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--text-muted); }
+        .search-input:focus + .search-icon { color: var(--energon-blue); }
+        .search-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; }
+        .search-tip { margin-top: 10px; font-size: 0.8rem; color: var(--text-muted); }
+        .search-tip .energon-highlight { color: var(--energon-blue); font-weight: 700; }
+        .clear-search {
+            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            width: 24px; height: 24px; background: var(--bg-secondary); border: none; border-radius: 50%;
+            color: var(--text-muted); cursor: pointer; display: none; align-items: center; justify-content: center;
+        }
+        .clear-search.visible { display: flex; }
+        .clear-search:hover { background: var(--accent); color: white; }
+        .clear-search svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+        .loading-overlay {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 60px 20px; gap: 16px;
+        }
+        .loading-overlay.visible { display: flex; }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+
+        .error-banner {
+            display: none; flex-direction: column; align-items: center;
+            padding: 32px 24px; margin-bottom: 16px;
+            background: rgba(255,68,102,0.08); border: 1px solid rgba(255,68,102,0.35);
+            border-radius: 16px; text-align: center; gap: 12px;
+        }
+        .error-banner.visible { display: flex; }
+        .error-banner-icon { font-size: 2.4rem; }
+        .error-banner-title { font-size: 1.1rem; font-weight: 700; color: var(--absent); }
+        .error-banner-msg { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7; max-width: 480px; }
+        .error-banner-msg code {
+            display: inline-block; margin-top: 10px;
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 10px 14px; font-family: 'Courier New', monospace;
+            font-size: 0.78rem; color: var(--energon-blue); text-align: left; white-space: pre; line-height: 1.6;
+        }
+        .error-retry-btn {
+            margin-top: 4px; padding: 10px 24px;
+            background: var(--accent); color: white; border: none; border-radius: 10px;
+            font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;
+        }
+        .error-retry-btn:hover { background: var(--accent-bright); box-shadow: 0 4px 20px var(--accent-glow); }
+
+        .member-list { display: flex; flex-direction: column; gap: 12px; }
+        .member-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 20px; background: var(--bg-card); border: 2px solid var(--border-color);
+            border-radius: 16px; cursor: pointer; transition: all 0.3s ease; user-select: none; position: relative;
+        }
+        .member-card:hover { background: var(--bg-card-hover); transform: translateX(4px); border-color: #555; }
+        .member-card:active { transform: scale(0.98); }
+        .member-card.present { background: var(--present-bg); border-color: var(--present-border); box-shadow: 0 0 25px rgba(0, 255, 170, 0.3); }
+        .member-card.present:hover { background: rgba(0, 255, 136, 0.18); }
+        .member-card.absent { background: var(--absent-bg); border-color: var(--absent-border); box-shadow: 0 0 25px rgba(255, 34, 85, 0.3); }
+        .member-card.absent:hover { background: rgba(255, 68, 102, 0.18); }
+        .member-card.highlighted { border-color: var(--energon-blue); box-shadow: 0 0 35px var(--energon-glow); }
+        .member-card.hidden { display: none; }
+        .member-card.saving { opacity: 0.6; pointer-events: none; }
+
+        .member-info { display: flex; align-items: center; gap: 16px; }
+        .member-avatar {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #ff0099, #ff66cc);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.2rem; color: white; box-shadow: 0 4px 20px var(--accent-glow);
+        }
+        .member-details { display: flex; flex-direction: column; }
+        .member-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+        .member-id { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+        .member-id .id-label { color: var(--text-secondary); font-weight: 500; }
+        .member-id .id-value {
+            font-family: 'Courier New', monospace; letter-spacing: 0.12em; font-weight: 700;
+            color: var(--energon-blue); background: rgba(255, 102, 204, 0.12);
+            padding: 3px 10px; border-radius: 5px; border: 1px solid rgba(255, 102, 204, 0.5);
+        }
+        .member-right { display: flex; align-items: center; gap: 14px; }
+
+        .graph-btn {
+            width: 36px; height: 36px; background: rgba(255, 102, 204, 0.12);
+            border: 1px solid rgba(255, 102, 204, 0.4); border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease; color: var(--energon-blue);
+        }
+        .graph-btn:hover {
+            background: var(--energon-blue); color: #000;
+            box-shadow: 0 0 20px var(--energon-glow);
+        }
+        .graph-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        .streak-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 7px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+        }
+        .streak-badge.streak-0 { background: rgba(136, 136, 136, 0.15); color: #999; border: 1px solid #666; }
+        .streak-badge.streak-1 { background: rgba(255, 179, 222, 0.2); color: var(--streak-1); border: 1px solid var(--streak-1); box-shadow: 0 0 15px rgba(255, 102, 204, 0.35); }
+        .streak-badge.streak-2 { background: rgba(255, 102, 204, 0.18); color: var(--streak-2); border: 1px solid var(--streak-2); box-shadow: 0 0 18px rgba(255, 102, 204, 0.45); }
+        .streak-badge.streak-3 { background: rgba(255, 26, 140, 0.18); color: var(--streak-3); border: 1px solid var(--streak-3); box-shadow: 0 0 20px rgba(255, 26, 140, 0.5); }
+        .streak-badge.streak-4 { background: rgba(255, 0, 153, 0.2); color: var(--streak-4); border: 1px solid var(--streak-4); box-shadow: 0 0 22px rgba(255, 0, 153, 0.55); }
+        .streak-badge.streak-5 { background: rgba(204, 0, 119, 0.22); color: var(--streak-5); border: 1px solid var(--streak-5); box-shadow: 0 0 25px rgba(204, 0, 119, 0.65); animation: firePulse 1.2s infinite; }
+        .streak-badge.streak-6 { background: var(--streak-6); color: #fff; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); animation: firePulse 1.2s infinite; }
+        @keyframes firePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+        .fire-icon { font-size: 0.95rem; animation: flicker 0.4s infinite alternate; }
+        @keyframes flicker { 0% { opacity: 1; transform: scale(1) rotate(-5deg); } 100% { opacity: 0.85; transform: scale(1.15) rotate(5deg); } }
+
+        .status-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 10px; font-size: 0.8rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: none; pointer-events: none;
+        }
+        .status-btn.absent { background: linear-gradient(135deg, var(--absent), var(--absent-dim)); color: white; box-shadow: 0 4px 20px var(--absent-glow); }
+        .status-btn.present { background: linear-gradient(135deg, var(--present), var(--present-dim)); color: #003d22; box-shadow: 0 4px 20px var(--present-glow); }
+        .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: statusPulse 1.5s infinite; }
+        @keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .no-results { display: none; flex-direction: column; align-items: center; padding: 60px 20px; text-align: center; }
+        .no-results.visible { display: flex; }
+        .no-results-icon { width: 80px; height: 80px; background: var(--bg-card); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 2.5rem; border: 2px solid var(--border-color); }
+        .no-results-text { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+        .no-results-sub { color: var(--text-muted); font-size: 0.9rem; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+
+        .modal-content {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 30px; max-width: 500px; width: 90%;
+            transform: scale(0.9); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 1.3rem; font-weight: 700; }
+        .modal-close {
+            width: 36px; height: 36px; background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+        .modal-close:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .modal-close svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        .confirm-body { text-align: center; padding: 20px 0; }
+        .confirm-icon { font-size: 3rem; margin-bottom: 16px; }
+        .confirm-text { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .confirm-name { font-size: 1.4rem; font-weight: 700; color: var(--present); margin-bottom: 24px; }
+        .confirm-btns { display: flex; gap: 12px; justify-content: center; }
+        .confirm-btn {
+            padding: 14px 32px; border-radius: 12px; font-size: 0.9rem; font-weight: 700;
+            border: none; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase;
+        }
+        .confirm-btn.save { background: var(--present); color: #003d22; box-shadow: 0 4px 20px var(--present-glow); }
+        .confirm-btn.save:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--present-glow); }
+        .confirm-btn.save:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .confirm-btn.cancel { background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color); }
+        .confirm-btn.cancel:hover { border-color: var(--accent); color: var(--accent); }
+
+        .graph-modal .modal-content { max-width: 650px; }
+        .graph-member-info { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .graph-avatar { width: 50px; height: 50px; background: linear-gradient(135deg, #ff0099, #ff66cc); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; color: white; }
+        .graph-member-name { font-size: 1.2rem; font-weight: 700; }
+        .graph-member-id { font-size: 0.8rem; color: var(--energon-blue); }
+
+        .graph-stats { display: flex; gap: 12px; margin-bottom: 24px; }
+        .graph-stat { flex: 1; background: var(--bg-secondary); border-radius: 12px; padding: 14px; text-align: center; }
+        .graph-stat-value { font-size: 1.6rem; font-weight: 800; }
+        .graph-stat-value.present-val { color: var(--present); }
+        .graph-stat-value.absent-val { color: var(--absent); }
+        .graph-stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+
+        .trend-indicator {
+            flex: 1; background: var(--bg-secondary); border-radius: 12px; padding: 14px; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .trend-arrow { font-size: 1.4rem; margin-bottom: 4px; }
+        .trend-arrow.up { color: var(--graph-up); animation: bounceUp 1s infinite; }
+        .trend-arrow.down { color: var(--graph-down); animation: bounceDown 1s infinite; }
+        .trend-text { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        @keyframes bounceUp { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes bounceDown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+        .graph-container { background: var(--bg-secondary); border-radius: 16px; padding: 20px; position: relative; }
+        .graph-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; }
+        .graph-title-icon { font-size: 1rem; }
+
+        .line-graph-wrapper { position: relative; height: 180px; margin: 10px 0; }
+        .line-graph-svg { width: 100%; height: 100%; overflow: visible; }
+        .graph-grid-line { stroke: var(--border-color); stroke-width: 1; stroke-dasharray: 4 4; }
+        .graph-path { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+        .graph-path-up { stroke: var(--graph-up); filter: drop-shadow(0 0 8px var(--present-glow)); }
+        .graph-path-down { stroke: var(--graph-down); filter: drop-shadow(0 0 8px var(--absent-glow)); }
+        .graph-area { opacity: 0.15; }
+        .graph-area-up { fill: var(--graph-up); }
+        .graph-area-down { fill: var(--graph-down); }
+        .graph-dot { r: 5; transition: all 0.2s ease; cursor: pointer; }
+        .graph-dot:hover { r: 8; }
+        .graph-dot-up { fill: var(--graph-up); filter: drop-shadow(0 0 6px var(--present-glow)); }
+        .graph-dot-down { fill: var(--graph-down); filter: drop-shadow(0 0 6px var(--absent-glow)); }
+
+        .graph-x-labels { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 5px; }
+        .graph-x-label { font-size: 0.65rem; color: var(--text-muted); }
+        .graph-y-labels { position: absolute; left: -30px; top: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+        .graph-y-label { font-size: 0.6rem; color: var(--text-muted); }
+
+        .graph-legend { display: flex; justify-content: center; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-secondary); }
+        .legend-line { width: 24px; height: 3px; border-radius: 2px; }
+        .legend-line.up-line { background: var(--graph-up); box-shadow: 0 0 8px var(--present-glow); }
+        .legend-line.down-line { background: var(--graph-down); box-shadow: 0 0 8px var(--absent-glow); }
+
+        .journey-message { text-align: center; margin-top: 16px; padding: 12px; background: rgba(255, 0, 153, 0.08); border: 1px solid rgba(255, 0, 153, 0.3); border-radius: 10px; }
+        .journey-message p { font-size: 0.85rem; color: var(--energon-blue); }
+        .journey-message .journey-icon { font-size: 1.1rem; margin-right: 6px; }
+
+        .graph-loading {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 180px; gap: 12px;
+        }
+        .graph-loading .spinner { width: 32px; height: 32px; border-width: 3px; }
+        .graph-no-data { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 0.9rem; }
+
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--present); color: #003d22; padding: 16px 28px; border-radius: 12px;
+            font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 8px 30px var(--present-glow); opacity: 0; transition: all 0.4s ease; z-index: 2000;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.error { background: var(--absent); color: white; box-shadow: 0 8px 30px var(--absent-glow); }
+        .toast svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+
+        .exit-fullscreen-btn {
+            position: fixed; top: 20px; right: 20px;
+            background: var(--accent); color: white; border: none; border-radius: 10px;
+            padding: 12px 20px; font-weight: 700; cursor: pointer; z-index: 9999;
+            display: none; align-items: center; gap: 8px; font-size: 0.85rem;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+        .exit-fullscreen-btn.visible { display: flex; }
+        .exit-fullscreen-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+        @media (max-width: 640px) {
+            .section-title { font-size: 1.6rem; }
+            .fullscreen-btn { position: static; margin: 0 auto 20px; }
+            .section-header { flex-direction: column; }
+            .days-row { grid-template-columns: repeat(3, 1fr); }
+            .member-card { flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
+            .member-right { width: 100%; justify-content: space-between; }
+            .graph-btn { width: 32px; height: 32px; }
+            .modal-content { padding: 20px; }
+            .line-graph-wrapper { height: 140px; }
+            .confirm-btns { flex-direction: column; }
+            .confirm-btn { width: 100%; }
+            .graph-stats { flex-wrap: wrap; }
+            .graph-stat, .trend-indicator { min-width: calc(50% - 6px); }
+        }
+
+        .plan-progress-wrap { margin-top: 14px; }
+        .plan-progress-bar-bg {
+            height: 8px; background: var(--bg-card); border-radius: 99px;
+            overflow: hidden; border: 1px solid var(--border-color);
+        }
+        .plan-progress-bar-fill {
+            height: 100%; border-radius: 99px;
+            background: linear-gradient(90deg, var(--energon-blue), var(--present));
+            box-shadow: 0 0 10px var(--energon-glow);
+            transition: width 0.6s ease;
+        }
+        .plan-progress-labels {
+            display: flex; justify-content: space-between;
+            margin-top: 6px; font-size: 0.7rem; color: var(--text-muted);
+        }
+        .plan-progress-labels span:first-child { color: var(--energon-blue); font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="attendance-section" id="attendanceSection">
+        
+        <header class="section-header">
+            <h1 class="section-title">Zumba <span>Attendance</span></h1>
+            <p class="section-subtitle">Track and manage daily Zumba attendance</p>
+            <button class="fullscreen-btn" id="fullscreenBtn">
+                <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                Fullscreen
+            </button>
+        </header>
+
+        <div class="day-lock-container">
+            <p class="day-lock-label">Weekly Schedule</p>
+            <div class="days-row" id="daysRow"></div>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by Power ID (e.g., 005)" autocomplete="off">
+                <span class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <button class="clear-search" id="clearSearch"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <p class="search-tip">⚡ Enter <span class="energon-highlight">Power ID</span> to locate a member instantly</p>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading members from Firebase…</p>
+        </div>
+
+        <div class="error-banner" id="errorBanner">
+            <div class="error-banner-icon">🔥</div>
+            <div class="error-banner-title">Firebase Permission Denied</div>
+            <div class="error-banner-msg">
+                Your Firestore security rules are blocking unauthenticated reads.<br>
+                Go to <strong>Firebase Console → Firestore → Rules</strong> and set:
+                <code>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}</code>
+                Then click <strong>Retry</strong> below. (Tighten rules after testing.)
+            </div>
+            <button class="error-retry-btn" id="retryBtn">🔄 Retry</button>
+        </div>
+
+        <div class="member-list" id="memberList"></div>
+
+        <div class="no-results" id="noResults">
+            <div class="no-results-icon">🔍</div>
+            <p class="no-results-text">No member found</p>
+            <p class="no-results-sub">Try searching with a different Power ID</p>
+        </div>
+    </div>
+
+    <button class="exit-fullscreen-btn" id="exitFullscreenBtn">
+        <svg viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+        Exit Fullscreen
+    </button>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Attendance</h3>
+                <button class="modal-close" id="confirmClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="confirm-body">
+                <div class="confirm-icon">✅</div>
+                <p class="confirm-text">Save attendance for today?</p>
+                <p class="confirm-name" id="confirmMemberName">MEMBER NAME</p>
+                <div class="confirm-btns">
+                    <button class="confirm-btn save" id="confirmSave">Save</button>
+                    <button class="confirm-btn cancel" id="confirmCancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay graph-modal" id="graphModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📈 Progress Journey</h3>
+                <button class="modal-close" id="graphClose"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div class="graph-member-info">
+                <div class="graph-avatar" id="graphAvatar">A</div>
+                <div>
+                    <div class="graph-member-name" id="graphMemberName">MEMBER</div>
+                    <div class="graph-member-id" id="graphMemberId">Power ID: 001</div>
+                </div>
+            </div>
+            <div class="graph-stats">
+                <div class="graph-stat">
+                    <div class="graph-stat-value present-val" id="graphPresent">—</div>
+                    <div class="graph-stat-label">Present</div>
+                </div>
+                <div class="graph-stat">
+                    <div class="graph-stat-value absent-val" id="graphAbsent">—</div>
+                    <div class="graph-stat-label">Absent</div>
+                </div>
+                <div class="trend-indicator">
+                    <span class="trend-arrow up" id="trendArrow">⬆</span>
+                    <span class="trend-text" id="trendText">Loading…</span>
+                </div>
+            </div>
+            <div class="graph-container">
+                <div class="graph-title"><span class="graph-title-icon">📊</span> Monthly Attendance Flow</div>
+                <div class="line-graph-wrapper" id="lineGraphWrapper">
+                    <div class="graph-loading" id="graphLoading">
+                        <div class="spinner"></div>
+                        <span class="loading-text">Fetching history…</span>
+                    </div>
+                    <svg class="line-graph-svg" id="lineGraphSvg" viewBox="0 0 560 160" preserveAspectRatio="none" style="display:none;"></svg>
+                </div>
+                <div class="graph-x-labels" id="graphXLabels">
+                    <span class="graph-x-label">Day 1</span>
+                    <span class="graph-x-label">—</span>
+                    <span class="graph-x-label">—</span>
+                    <span class="graph-x-label">—</span>
+                </div>
+                <div class="plan-progress-wrap" id="planProgressWrap" style="display:none;">
+                    <div class="plan-progress-bar-bg">
+                        <div class="plan-progress-bar-fill" id="planProgressFill"></div>
+                    </div>
+                    <div class="plan-progress-labels">
+                        <span id="planProgressUsed">0 days used</span>
+                        <span id="planProgressTotal">/ 30 day plan</span>
+                    </div>
+                </div>
+                <div class="graph-legend">
+                    <div class="legend-item"><div class="legend-line up-line"></div> Improvement ⬆</div>
+                    <div class="legend-item"><div class="legend-line down-line"></div> Decline ⬇</div>
+                </div>
+            </div>
+            <div class="journey-message" id="journeyMessage">
+                <p><span class="journey-icon">💪</span> <span id="journeyText">Keep pushing! Your consistency is building.</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="toastText">Attendance saved!</span>
+    </div>
+
+    <script type="module" src="Zumba_Members_Section.js"></script>
+</body>
+</html>

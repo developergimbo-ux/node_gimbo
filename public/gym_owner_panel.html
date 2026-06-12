@@ -1,0 +1,273 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GYM Owner Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a; --bg-secondary: #111111; --bg-card: #161616; --bg-hover: #1e1e1e;
+            --border: #2a2a2a; --text-primary: #ffffff; --text-secondary: #a0a0a0; --text-muted: #666666;
+            --accent: #3b82f6; --accent-hover: #2563eb; --success: #22c55e; --warning: #f59e0b;
+            --danger: #ef4444; --purple: #8b5cf6; --pink: #ec4899;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; }
+        .sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; overflow-y: auto; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .sidebar-logo { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+        .sidebar-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+        .nav-menu { list-style: none; flex: 1; }
+        .nav-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-secondary); transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--bg-hover); color: var(--accent); border-left-color: var(--accent); }
+        .nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .nav-divider { height: 1px; background: var(--border); margin: 10px 20px; }
+        .nav-label { padding: 8px 20px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); }
+        .main-content { flex: 1; margin-left: 240px; padding: 30px; min-height: 100vh; }
+        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .page-title { font-size: 1.5rem; font-weight: 700; }
+        .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 2rem; font-weight: 700; }
+        .stat-value.success { color: var(--success); } .stat-value.danger { color: var(--danger); }
+        .stat-value.warning { color: var(--warning); } .stat-value.accent { color: var(--accent); }
+        .stat-value.purple { color: var(--purple); }
+        .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .table-title { font-size: 1rem; font-weight: 600; }
+        .table-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background: var(--bg-secondary); font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        tr:hover { background: var(--bg-hover); } tr:last-child td { border-bottom: none; }
+        .btn { padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .btn-primary { background: var(--accent); color: white; } .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--danger); color: white; } .btn-danger:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--text-muted); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .form-input { width: 100%; padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+        .form-input:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text-muted); }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .badge-present { background: rgba(34,197,94,0.15); color: var(--success); }
+        .badge-inside { background: rgba(59,130,246,0.15); color: var(--accent); }
+        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 12px; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 2000; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); }
+        .loading-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-row td { text-align: center; padding: 40px; color: var(--text-muted); }
+        .inside-indicator { width: 8px; height: 8px; background: var(--success); border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; } .mobile-menu-btn { display: flex !important; }
+        }
+        .mobile-menu-btn { display: none; position: fixed; top: 20px; left: 20px; width: 40px; height: 40px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; align-items: center; justify-content: center; cursor: pointer; z-index: 101; }
+        .mobile-menu-btn svg { width: 24px; height: 24px; stroke: var(--text-primary); fill: none; stroke-width: 2; }
+    </style>
+</head>
+<body>
+
+<button class="mobile-menu-btn" id="mobileMenuBtn">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">GYM ADMIN</div>
+        <div class="sidebar-subtitle">Owner Control Panel</div>
+    </div>
+    <ul class="nav-menu">
+        <div class="nav-label" style="color:var(--accent);font-weight:700;font-size:0.72rem;">Gym Section</div>
+        <li class="nav-item active" data-section="dashboard">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+        </li>
+        <li class="nav-item" data-section="members" data-href="members.html">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Members
+        </li>
+        <li class="nav-item" data-section="attendance" data-href="attendance.html">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance
+        </li>
+        <li class="nav-item" data-section="fees" data-href="fees.html">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Fees
+        </li>
+        <li class="nav-item" id="nav-diet" onclick="showDietChart()" style="cursor:pointer;">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/><path d="M8 14s1-1 4-1 4 1 4 1"/></svg>Diet Chart
+        </li>
+        <li class="nav-item" onclick="window.location.href='exercise_chart.html'" style="cursor:pointer;">
+            <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 6.5v11"/><path d="M20 6.5v11"/></svg>Exercise Chart
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;margin-left:auto;opacity:0.5;stroke:currentColor;fill:none;stroke-width:2;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </li>
+        <!-- Other Sections -->
+        <div class="nav-divider"></div>
+        <div class="nav-label" style="color:var(--warning);font-weight:700;font-size:0.72rem;">Other Sections</div>
+        <li class="nav-item" id="zumbaToggle" onclick="toggleZumba()" style="cursor:pointer;justify-content:space-between;">
+            <span style="display:flex;align-items:center;gap:12px;">
+                <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="5" r="2"/><path d="M12 7v5"/><path d="M7 10c1 2 2 3 5 3s4-1 5-3"/><path d="M9 20l1-5"/><path d="M15 20l-1-5"/></svg>
+                Zumba
+            </span>
+            <svg id="zumbaArrow" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform 0.3s;"><polyline points="6 9 12 15 18 9"/></svg>
+        </li>
+        <div id="zumbaSubmenu" style="overflow:hidden;max-height:0;transition:max-height 0.35s ease;background:rgba(0,0,0,0.2);">
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_members.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Members
+            </li>
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_attendance.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance
+            </li>
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_fees.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Fees
+            </li>
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_diet_chart.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/><path d="M8 14s1-1 4-1 4 1 4 1"/></svg>Diet Chart
+            </li>
+        </div>
+
+        <div class="nav-divider"></div>
+        <div class="nav-label">Inventory</div>
+        <li class="nav-item" data-section="supplements">
+            <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="8" rx="2"/><path d="M3 10v8a2 2 0 002 2h14a2 2 0 002-2v-8"/><path d="M10 16h4"/></svg>Supplements
+        </li>
+        <li class="nav-item" data-section="equipment">
+            <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 6.5v11"/><path d="M20 6.5v11"/></svg>Equipment
+        </li>
+        <li class="nav-item" data-section="sales">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>Supplement Sales
+        </li>
+        <div class="nav-divider"></div>
+        <div class="nav-label">Staff</div>
+        <li class="nav-item" data-section="staff">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Staff
+        </li>
+        <div class="nav-divider"></div>
+        <div class="nav-label">Management</div>
+        <li class="nav-item" onclick="window.location.href='excel.html'" style="cursor:pointer;">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Excel
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;margin-left:auto;opacity:0.5;stroke:currentColor;fill:none;stroke-width:2;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </li>
+        <li class="nav-item" data-section="reports">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports
+        </li>
+        <li class="nav-item" onclick="window.location.href='settings.html'" title="Open Settings" style="cursor:pointer;">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;margin-left:auto;opacity:0.5;stroke:currentColor;fill:none;stroke-width:2;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </li>
+    </ul>
+    <div class="sidebar-footer">
+        <div id="gymNameFooter">GYM Admin Panel</div>
+        <div style="margin-top:4px;">v2.0 — Owner Panel</div>
+    </div>
+</aside>
+
+<div class="main-content">
+
+    <!-- DIET CHART SECTION (embedded) -->
+    <div class="section" id="section-diet">
+        <iframe id="dietChartFrame" src="" style="width:100%;height:calc(100vh - 60px);border:none;border-radius:12px;display:block;" allow="same-origin"></iframe>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="section-dashboard">
+        <div class="page-header">
+            <div>
+                <div class="page-title">Dashboard</div>
+                <div class="page-subtitle" id="dashboardDate">Loading...</div>
+            </div>
+            <button class="btn btn-secondary" onclick="refreshAll()">
+                <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh
+            </button>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Members</div><div class="stat-value accent" id="statTotalMembers">—</div></div>
+            <div class="stat-card"><div class="stat-label">Active Members</div><div class="stat-value success" id="statActiveMembers">—</div></div>
+            <div class="stat-card"><div class="stat-label">Paused Members</div><div class="stat-value warning" id="statPausedMembers">—</div></div>
+            <div class="stat-card"><div class="stat-label">Left Members</div><div class="stat-value danger" id="statLeftMembers">—</div></div>
+            <div class="stat-card"><div class="stat-label">Today Present</div><div class="stat-value success" id="statTodayPresent">—</div></div>
+            <div class="stat-card">
+                <div class="stat-label">Monthly Revenue</div>
+                <div class="stat-value success" id="statMonthlyRevenue">—</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:6px;">
+                    Fees: <span id="statRevenueFees" style="color:var(--success);">—</span> +
+                    Sales: <span id="statRevenueSales" style="color:var(--purple);">—</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Unpaid Fees</div>
+                <div class="stat-value danger" id="statUnpaidFees">—</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:6px;"><span id="statUnpaidCount">—</span> active members unpaid this month</div>
+            </div>
+            <div class="stat-card"><div class="stat-label">Equipment Count</div><div class="stat-value purple" id="statEquipmentCount">—</div></div>
+            <div class="stat-card" id="insideGymCard" style="cursor:pointer;" onclick="showInsideModal()" title="Click to see who's inside">
+                <div class="stat-label" style="display:flex;align-items:center;gap:6px;">
+                    <span class="inside-indicator" id="insidePulse"></span>Inside Gym Now
+                </div>
+                <div class="stat-value success" id="statInsideGym">—</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:6px;" id="insideGymMeta">Calculating…</div>
+            </div>
+        </div>
+
+        <!-- Inside Gym Modal -->
+        <div id="insideGymModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;align-items:center;justify-content:center;">
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                    <div style="font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px;">
+                        <span class="inside-indicator"></span>Members Inside Gym
+                    </div>
+                    <button onclick="document.getElementById('insideGymModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;line-height:1;">×</button>
+                </div>
+                <div id="insideModalMeta" style="font-size:0.8rem;color:var(--text-muted);margin-bottom:14px;"></div>
+                <div id="insideModalList"></div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title"><span class="inside-indicator"></span>Today's Present Members</div>
+                <div class="table-actions">
+                    <span id="todayPresentBadge" style="font-size:0.8rem;color:var(--text-muted);">Loading...</span>
+                    <button class="btn btn-secondary btn-sm" onclick="loadTodayPresent()">
+                        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th>#</th><th>Power ID</th><th>Name</th><th>Check-In Time</th><th>Package</th><th>Status</th></tr></thead>
+                    <tbody id="todayPresentBody"><tr><td colspan="6" class="loading-row"><span class="loading-spinner"></span> Loading from Firebase...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<script>
+function toggleZumba() {
+    const menu = document.getElementById('zumbaSubmenu');
+    const arrow = document.getElementById('zumbaArrow');
+    const open = menu.style.maxHeight !== '0px' && menu.style.maxHeight !== '';
+    menu.style.maxHeight = open ? '0px' : '200px';
+    arrow.style.transform = open ? '' : 'rotate(180deg)';
+}
+</script>
+<script type="module" src="gym_owner_panel.js"></script>
+</body>
+</html>

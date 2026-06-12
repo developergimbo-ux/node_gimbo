@@ -1,0 +1,541 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Supplement Sales</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0b0b0b;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    padding: 30px;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title {
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.subtitle {
+    color: #9ca3af;
+    margin-top: 5px;
+}
+
+/* BUTTON */
+.btn-primary {
+    background: #3b82f6;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+/* CARDS */
+.stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 25px;
+}
+
+.card {
+    flex: 1;
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 10px;
+}
+
+.green {
+    color: #22c55e;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.blue {
+    color: #3b82f6;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+/* ACTION BAR */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.btn-secondary {
+    background: #1f2937;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: #374151;
+}
+
+.input {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: white;
+}
+
+.input::placeholder {
+    color: #6b7280;
+}
+
+/* TABLE CARD */
+.table-card {
+    margin-top: 25px;
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.search {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: white;
+}
+
+.search::placeholder {
+    color: #6b7280;
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    padding: 14px 20px;
+    font-size: 12px;
+    color: #9ca3af;
+    background: #111;
+    text-align: left;
+}
+
+td {
+    padding: 20px;
+    border-top: 1px solid #2a2a2a;
+    text-align: center;
+}
+
+td:first-child {
+    text-align: left;
+}
+
+td:nth-child(2) {
+    text-align: left;
+}
+
+.empty {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+}
+
+/* ACTION BUTTONS */
+.action-btn {
+    background: #ef4444;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.action-btn:hover {
+    background: #dc2626;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 30px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    color: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.btn-save {
+    flex: 1;
+    background: #3b82f6;
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-save:hover {
+    background: #2563eb;
+}
+
+.btn-cancel {
+    flex: 1;
+    background: #374151;
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-cancel:hover {
+    background: #4b5563;
+}
+
+/* ERROR BOX */
+.error {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    border: 1px solid #ef4444;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: rgba(239,68,68,0.1);
+    display: none;
+    z-index: 999;
+}
+
+.error.show {
+    display: block;
+}
+
+/* SELECT DROPDOWN */
+.form-group select {
+    width: 100%;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    color: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.form-group select:focus {
+    border-color: #3b82f6;
+}
+
+.form-group select option {
+    background: #1f2937;
+    color: white;
+}
+
+.form-group select option:disabled {
+    color: #6b7280;
+}
+
+.select-loading {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* DELETE CONFIRM MODAL */
+.confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1100;
+    justify-content: center;
+    align-items: center;
+}
+.confirm-overlay.active { display: flex; }
+
+.confirm-box {
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 28px;
+    width: 340px;
+    max-width: 90vw;
+    text-align: center;
+}
+.confirm-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(239,68,68,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+.confirm-icon svg {
+    width: 22px; height: 22px;
+    stroke: #ef4444; fill: none; stroke-width: 2;
+}
+.confirm-heading {
+    font-size: 17px; font-weight: 600; margin-bottom: 8px;
+}
+.confirm-body {
+    font-size: 13px; color: #9ca3af; margin-bottom: 24px; line-height: 1.5;
+}
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-cancel {
+    flex: 1; background: #1f2937; border: none; padding: 11px 0;
+    border-radius: 8px; color: white; font-size: 14px; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+.confirm-delete {
+    flex: 1; background: #ef4444; border: none; padding: 11px 0;
+    border-radius: 8px; color: white; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+}
+.confirm-delete:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+
+</head>
+
+<body>
+
+<div style="margin-bottom:14px;">
+    <button onclick="window.location.href='gym_owner_panel.html'" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e1e1e;color:#a0a0a0;border:1px solid #2a2a2a;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;" onmouseover="this.style.borderColor='#666'" onmouseout="this.style.borderColor='#2a2a2a'">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Dashboard
+    </button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+    <div>
+        <div class="title">Supplement Sales</div>
+        <div class="subtitle">Track and manage supplement sales</div>
+    </div>
+    <button class="btn-primary" id="recordSaleBtn">+ Record Sale</button>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="card">
+        <div class="card-title">TOTAL SALES (THIS MONTH)</div>
+        <div class="green" id="totalSales">₹0</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">ITEMS SOLD (THIS MONTH)</div>
+        <div class="blue" id="itemsSold">0</div>
+    </div>
+</div>
+
+<!-- ACTION BAR -->
+<div class="actions">
+    <button class="btn-primary" id="exportMonthlyBtn">⬇ Export Monthly Report</button>
+
+    <span style="color:#9ca3af;">Custom Range:</span>
+
+    <input class="input" id="dateFrom" type="date">
+    <span>to</span>
+    <input class="input" id="dateTo" type="date">
+
+    <button class="btn-secondary" id="exportRangeBtn">Export Range</button>
+</div>
+
+<!-- TABLE -->
+<div class="table-card">
+
+    <div class="table-header">
+        <div>Sales Records</div>
+        <input class="search" id="searchInput" placeholder="Search sales...">
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>DATE</th>
+                <th>SUPPLEMENT</th>
+                <th>QUANTITY</th>
+                <th>UNIT PRICE</th>
+                <th>TOTAL AMOUNT</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+
+        <tbody id="tableBody">
+            <tr>
+                <td colspan="6" class="empty">Loading sales data...</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="saleModal">
+    <div class="modal-content">
+        <div class="modal-title">Record New Sale</div>
+        
+        <form id="saleForm">
+            <div class="form-group">
+                <label for="supplementName">Supplement Name</label>
+                <select id="supplementName" name="supplementName" required>
+                    <option value="" disabled selected>Loading supplements...</option>
+                </select>
+                <div class="select-loading" id="suppLoadStatus"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Quantity</label>
+                <input type="number" id="quantity" name="quantity" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="unitPrice">Unit Price (₹)</label>
+                <input type="number" id="unitPrice" name="unitPrice" min="0" step="0.01" required placeholder="Auto-filled from supplement">
+            </div>
+
+            <div class="form-group">
+                <label for="saleDate">Date (YYYY-MM-DD)</label>
+                <input type="date" id="saleDate" name="saleDate" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save">Save Sale</button>
+                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="confirm-overlay" id="deleteOverlay">
+    <div class="confirm-box">
+        <div class="confirm-icon">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </div>
+        <div class="confirm-heading">Delete Sale</div>
+        <div class="confirm-body">Are you sure you want to delete this sale record? This action cannot be undone.</div>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" id="deleteCancelBtn">Cancel</button>
+            <button class="confirm-delete" id="deleteConfirmBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ERROR -->
+<div class="error" id="errorBox"></div>
+
+<script type="module" src="suppliment_sales.js"></script>
+
+</body>
+</html>

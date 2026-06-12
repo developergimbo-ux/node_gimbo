@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Supplements</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    background: #0b0b0b;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+.container {
+    padding: 30px;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+/* ADD BUTTON */
+.add-btn {
+    background: #3b82f6;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* CARD */
+.card {
+    margin-top: 25px;
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* CARD HEADER */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* SEARCH */
+.search {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: white;
+    width: 200px;
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 14px 20px;
+    font-size: 12px;
+    color: #9ca3af;
+    background: #111;
+}
+
+td {
+    padding: 20px;
+    border-top: 1px solid #2a2a2a;
+}
+
+td:nth-child(3), td:nth-child(4) {
+    text-align: center;
+}
+
+/* ACTION BUTTONS */
+.action-btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 6px;
+}
+
+.edit {
+    background: #1f2937;
+    color: white;
+}
+
+.delete {
+    background: #ef4444;
+    color: white;
+}
+
+/* MODAL OVERLAY */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+.modal-overlay.open {
+    display: flex;
+}
+
+/* MODAL BOX */
+.modal {
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 28px;
+    width: 400px;
+    max-width: 90vw;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 22px;
+}
+
+.modal-field {
+    margin-bottom: 16px;
+}
+
+.modal-field label {
+    display: block;
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modal-field input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+.modal-field input:focus {
+    border-color: #3b82f6;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: flex-end;
+}
+
+.modal-cancel {
+    background: #1f2937;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.modal-save {
+    background: #3b82f6;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.modal-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* DELETE CONFIRM MODAL */
+.confirm-modal {
+    background: #151515;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 28px;
+    width: 360px;
+    max-width: 90vw;
+}
+.confirm-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(239,68,68,0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+.confirm-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #ef4444;
+    fill: none;
+    stroke-width: 2;
+}
+.confirm-heading {
+    font-size: 17px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+}
+.confirm-body {
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+.confirm-name {
+    color: #fff;
+    font-weight: 600;
+}
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+}
+.confirm-cancel-btn {
+    flex: 1;
+    background: #1f2937;
+    border: none;
+    padding: 11px 0;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+.confirm-delete-btn {
+    flex: 1;
+    background: #ef4444;
+    border: none;
+    padding: 11px 0;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+.confirm-delete-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <div style="margin-bottom:14px;">
+        <button onclick="window.location.href='gym_owner_panel.html'" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e1e1e;color:#a0a0a0;border:1px solid #2a2a2a;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;" onmouseover="this.style.borderColor='#666'" onmouseout="this.style.borderColor='#2a2a2a'">
+            <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back to Dashboard
+        </button>
+    </div>
+
+    <div class="header">
+        <div>
+            <div class="title">Supplements Inventory</div>
+            <div class="subtitle">Manage supplement stock</div>
+        </div>
+
+        <button class="add-btn" id="addBtn">+ Add Supplement</button>
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            <div class="card-title">Supplement List</div>
+            <input class="search" id="searchInput" placeholder="Search supplements...">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>BRAND</th>
+                    <th>PRICE</th>
+                    <th>STOCK</th>
+                    <th>ACTIONS</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+                <tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:40px;">Loading...</td></tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- ADD / EDIT SUPPLEMENT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-title" id="modalTitle">Add Supplement</div>
+
+        <div class="modal-field">
+            <label>Name</label>
+            <input type="text" id="fieldName" placeholder="e.g. Whey Protein">
+        </div>
+        <div class="modal-field">
+            <label>Brand</label>
+            <input type="text" id="fieldBrand" placeholder="e.g. ON">
+        </div>
+        <div class="modal-field">
+            <label>Price (₹)</label>
+            <input type="number" id="fieldPrice" placeholder="e.g. 2500" min="0">
+        </div>
+        <div class="modal-field">
+            <label>Stock</label>
+            <input type="number" id="fieldStock" placeholder="e.g. 10" min="0">
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-cancel" id="modalCancel">Cancel</button>
+            <button class="modal-save"   id="modalSave">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteOverlay">
+    <div class="confirm-modal">
+        <div class="confirm-icon">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </div>
+        <div class="confirm-heading">Delete Supplement</div>
+        <div class="confirm-body">Are you sure you want to delete <span class="confirm-name" id="deleteSupName"></span>? This action cannot be undone.</div>
+        <div class="confirm-actions">
+            <button class="confirm-cancel-btn" id="deleteCancelBtn">Cancel</button>
+            <button class="confirm-delete-btn" id="deleteConfirmBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="supplement.js"></script>
+
+</body>

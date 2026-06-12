@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Import / Export — GYM Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a; --bg-secondary: #111111; --bg-card: #161616; --bg-hover: #1e1e1e;
+            --border: #2a2a2a; --text-primary: #ffffff; --text-secondary: #a0a0a0; --text-muted: #666666;
+            --accent: #3b82f6; --accent-hover: #2563eb; --success: #22c55e; --warning: #f59e0b;
+            --danger: #ef4444; --purple: #8b5cf6; --pink: #ec4899;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; display: flex; }
+
+        /* ── Sidebar ── */
+        .sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 20px 0; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; overflow-y: auto; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .sidebar-logo { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+        .sidebar-subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+        .nav-menu { list-style: none; flex: 1; }
+        .nav-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-secondary); transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--bg-hover); color: var(--accent); border-left-color: var(--accent); }
+        .nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .nav-divider { height: 1px; background: var(--border); margin: 10px 20px; }
+        .nav-label { padding: 8px 20px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); }
+
+        /* ── Main ── */
+        .main-content { flex: 1; margin-left: 240px; padding: 30px; min-height: 100vh; }
+        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .page-title { font-size: 1.5rem; font-weight: 700; }
+        .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px; }
+
+        /* ── Back button ── */
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; border: 1px solid var(--border);
+            background: var(--bg-hover); color: var(--text-primary);
+            transition: all 0.2s; text-decoration: none;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+        /* ── Buttons ── */
+        .btn { padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .btn-primary { background: var(--accent); color: white; } .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--danger); color: white; } .btn-danger:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--bg-hover); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--text-muted); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+        /* ── Form ── */
+        .form-input { width: 100%; padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+        .form-input:focus { border-color: var(--accent); }
+
+        /* ── Excel cards ── */
+        .excel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .excel-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+        .excel-card-title { font-size: 1rem; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .excel-card-title svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; stroke-width: 2; }
+        .excel-card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+        .excel-options { display: flex; flex-direction: column; gap: 10px; }
+        .file-input-wrapper { position: relative; overflow: hidden; display: block; }
+        .file-input-wrapper input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+        /* ── Toast ── */
+        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 12px; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 2000; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-color: var(--success); } .toast.error { border-color: var(--danger); }
+
+        /* ── Mobile ── */
+        .mobile-menu-btn { display: none; position: fixed; top: 20px; left: 20px; width: 40px; height: 40px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; align-items: center; justify-content: center; cursor: pointer; z-index: 101; }
+        .mobile-menu-btn svg { width: 24px; height: 24px; stroke: var(--text-primary); fill: none; stroke-width: 2; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px 16px; } .mobile-menu-btn { display: flex !important; }
+            .excel-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="mobile-menu-btn" id="mobileMenuBtn">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">GYM ADMIN</div>
+        <div class="sidebar-subtitle">Owner Control Panel</div>
+    </div>
+    <ul class="nav-menu">
+
+        <div class="nav-label" style="color:var(--accent);font-weight:700;font-size:0.72rem;">Gym Section</div>
+
+        <li class="nav-item" onclick="window.location.href='gym_owner_panel.html'">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+        </li>
+        <li class="nav-item" onclick="window.location.href='members.html'">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Members
+        </li>
+        <li class="nav-item" onclick="window.location.href='attendance.html'">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance
+        </li>
+        <li class="nav-item" onclick="window.location.href='fees.html'">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Fees
+        </li>
+        <li class="nav-item" onclick="window.location.href='diet_chart.html'">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/><path d="M8 14s1-1 4-1 4 1 4 1"/></svg>Diet Chart
+        </li>
+        <li class="nav-item" onclick="window.location.href='exercise_chart.html'">
+            <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 6.5v11"/><path d="M20 6.5v11"/></svg>Exercise Chart
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;margin-left:auto;opacity:0.5;stroke:currentColor;fill:none;stroke-width:2;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </li>
+
+        <div class="nav-divider"></div>
+        <div class="nav-label" style="color:var(--warning);font-weight:700;font-size:0.72rem;">Other Sections</div>
+
+        <li class="nav-item" id="zumbaToggle" onclick="toggleZumba()" style="cursor:pointer;justify-content:space-between;">
+            <span style="display:flex;align-items:center;gap:12px;">
+                <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="5" r="2"/><path d="M12 7v5"/><path d="M7 10c1 2 2 3 5 3s4-1 5-3"/><path d="M9 20l1-5"/><path d="M15 20l-1-5"/></svg>
+                Zumba
+            </span>
+            <svg id="zumbaArrow" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform 0.3s;"><polyline points="6 9 12 15 18 9"/></svg>
+        </li>
+        <div id="zumbaSubmenu" style="overflow:hidden;max-height:0;transition:max-height 0.35s ease;background:rgba(0,0,0,0.2);">
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_members.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Members
+            </li>
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_attendance.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance
+            </li>
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_fees.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Fees
+            </li>
+            <li class="nav-item" style="padding-left:36px;font-size:0.85rem;" onclick="window.location.href='zumba_diet_chart.html'">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 8v4l3 3"/><path d="M8 14s1-1 4-1 4 1 4 1"/></svg>Diet Chart
+            </li>
+        </div>
+
+        <div class="nav-divider"></div>
+        <div class="nav-label">Inventory</div>
+        <li class="nav-item" onclick="window.location.href='supplement.html'">
+            <svg viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="8" rx="2"/><path d="M3 10v8a2 2 0 002 2h14a2 2 0 002-2v-8"/><path d="M10 16h4"/></svg>Supplements
+        </li>
+        <li class="nav-item" onclick="window.location.href='equipment.html'">
+            <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 6.5v11"/><path d="M20 6.5v11"/></svg>Equipment
+        </li>
+        <li class="nav-item" onclick="window.location.href='suppliment_sales.html'">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>Supplement Sales
+        </li>
+
+        <div class="nav-divider"></div>
+        <div class="nav-label">Staff</div>
+        <li class="nav-item" onclick="window.location.href='staff.html'">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Staff
+        </li>
+
+        <div class="nav-divider"></div>
+        <div class="nav-label">Management</div>
+
+        <!-- Excel — active on this page -->
+        <li class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Excel
+        </li>
+        <li class="nav-item" onclick="window.location.href='reports.html'">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Reports
+        </li>
+        <li class="nav-item" onclick="window.location.href='settings.html'">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;margin-left:auto;opacity:0.5;stroke:currentColor;fill:none;stroke-width:2;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </li>
+
+    </ul>
+    <div class="sidebar-footer">
+        <div id="gymNameFooter">GYM Admin Panel</div>
+        <div style="margin-top:4px;">v2.0 — Owner Panel</div>
+    </div>
+</aside>
+
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════════════ -->
+<div class="main-content">
+
+    <!-- ── Page header with Back button ── -->
+    <div class="page-header">
+        <div>
+            <div class="page-title">Excel Import / Export</div>
+            <div class="page-subtitle">Import members or attendance from .xlsx files</div>
+        </div>
+        <!-- ▶ BACK TO DASHBOARD BUTTON ◀ -->
+        <a class="btn-back" href="gym_owner_panel.html" title="Back to Dashboard">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- ── Excel grid ── -->
+    <div class="excel-grid">
+
+        <!-- ════ IMPORT CARD ════ -->
+        <div class="excel-card">
+            <div class="excel-card-title">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Import Data
+            </div>
+            <div class="excel-card-desc">Import any data from .xlsx — synced directly to Firebase</div>
+            <div class="excel-options">
+
+                <!-- Members -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--accent);fill:none;stroke-width:2;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        Import Members
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ members</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportInput" onchange="handleExcelImport(this,'members')">
+                </div>
+
+                <!-- Attendance -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--success);fill:none;stroke-width:2;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Import Attendance
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ attendance</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportAttendanceInput" onchange="handleExcelImport(this,'attendance')">
+                </div>
+
+                <!-- Supplements -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--purple);fill:none;stroke-width:2;"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="8" rx="2"/><path d="M3 10v8a2 2 0 002 2h14a2 2 0 002-2v-8"/><path d="M10 16h4"/></svg>
+                        Import Supplements
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ supplements</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportSupplementsInput" onchange="handleExcelImport(this,'supplements')">
+                </div>
+
+                <!-- Equipment -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--warning);fill:none;stroke-width:2;"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M4 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 6.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M20 22.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/><path d="M4 6.5v11"/><path d="M20 6.5v11"/></svg>
+                        Import Equipment
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ equipment</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportEquipmentInput" onchange="handleExcelImport(this,'equipment')">
+                </div>
+
+                <!-- Supplement Sales -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--pink);fill:none;stroke-width:2;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+                        Import Supplement Sales
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ sales</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportSalesInput" onchange="handleExcelImport(this,'sales')">
+                </div>
+
+                <!-- Staff -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--success);fill:none;stroke-width:2;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Import Staff
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ staff</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportStaffInput" onchange="handleExcelImport(this,'staff')">
+                </div>
+
+                <!-- Zumba Members -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--warning);fill:none;stroke-width:2;"><circle cx="12" cy="5" r="2"/><path d="M12 7v5"/><path d="M7 10c1 2 2 3 5 3s4-1 5-3"/><path d="M9 20l1-5"/><path d="M15 20l-1-5"/></svg>
+                        Import Zumba Members
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ zumba_members</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportZumbaMembersInput" onchange="handleExcelImport(this,'zumba_members')">
+                </div>
+
+                <!-- Zumba Attendance -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--pink);fill:none;stroke-width:2;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Import Zumba Attendance
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ zumba_attendance</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportZumbaAttInput" onchange="handleExcelImport(this,'zumba_attendance')">
+                </div>
+
+                <!-- Zumba Fees -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-secondary" style="width:100%;justify-content:flex-start;gap:12px;padding:12px 16px;">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;stroke:var(--accent);fill:none;stroke-width:2;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Import Zumba Fees
+                        <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">→ zumba_fees</span>
+                    </button>
+                    <input type="file" accept=".xlsx,.xls" id="excelImportZumbaFeesInput" onchange="handleExcelImport(this,'zumba_fees')">
+                </div>
+
+                <!-- Status bar -->
+                <div id="importStatus" style="font-size:0.82rem;color:var(--text-muted);min-height:18px;margin-top:4px;padding:8px;background:var(--bg-secondary);border-radius:6px;display:none;"></div>
+
+                <!-- Column guide -->
+                <div style="margin-top:4px;padding-top:12px;border-top:1px solid var(--border);font-size:0.76rem;color:var(--text-muted);line-height:1.8;">
+                    <b style="color:var(--text-secondary);">Members:</b> Power ID, Name, Phone, Email, Package, Fitness Goal, Status, Fee, Last Payment, Joined<br>
+                    <b style="color:var(--text-secondary);">Attendance:</b> Power ID, Date (YYYY-MM-DD), Status (present/absent), Time<br>
+                    <b style="color:var(--text-secondary);">Supplements:</b> Name, Brand, Price, Stock<br>
+                    <b style="color:var(--text-secondary);">Equipment:</b> Name, Category, Quantity, Condition, Purchase Date, Notes<br>
+                    <b style="color:var(--text-secondary);">Sales:</b> Date, Supplement, Quantity, Unit Price, Total<br>
+                    <b style="color:var(--text-secondary);">Staff:</b> Name, Role, Phone, Email, Salary, Join Date, Status<br>
+                    <b style="color:var(--text-secondary);">Zumba Members:</b> Power ID, Name, Phone, Email, Package, Fee, Status, Join Date<br>
+                    <b style="color:var(--text-secondary);">Zumba Attendance:</b> Power ID, Name, Date, Status, Time<br>
+                    <b style="color:var(--text-secondary);">Zumba Fees:</b> Power ID, Name, Amount, Date, Package, Status, Next Payment
+                </div>
+            </div>
+        </div>
+
+        <!-- ════ EXPORT CARD ════ -->
+        <div class="excel-card">
+            <div class="excel-card-title">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export Data
+            </div>
+            <div class="excel-card-desc">Export data to Excel for backup or analysis</div>
+            <div class="excel-options">
+
+                <button class="btn btn-primary" onclick="exportData('members')" style="width:100%;padding:13px 16px;">Export All Members</button>
+
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px;">
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">Select date for daily attendance:</div>
+                    <input type="date" id="exportDailyDate" class="form-input" style="margin-bottom:10px;">
+                    <button class="btn btn-primary" onclick="exportDailyAttendance()" style="width:100%;padding:12px 16px;">Export Daily Attendance</button>
+                </div>
+
+                <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:14px;">
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">Select month for monthly attendance:</div>
+                    <input type="month" id="exportMonthlyMonth" class="form-input" style="margin-bottom:10px;">
+                    <button class="btn btn-primary" onclick="exportMonthlyAttendance()" style="width:100%;padding:12px 16px;">Export Monthly Attendance</button>
+                </div>
+
+                <button class="btn btn-primary"   onclick="exportFeesPending()"      style="width:100%;padding:13px 16px;">Export Fees Pending</button>
+                <button class="btn btn-primary"   onclick="exportData('fees')"        style="width:100%;padding:13px 16px;">Export Full Fees Report</button>
+                <button class="btn btn-secondary" onclick="exportData('supplements')" style="width:100%;padding:13px 16px;">Export Supplements</button>
+                <button class="btn btn-secondary" onclick="exportData('equipment')"   style="width:100%;padding:13px 16px;">Export Equipment</button>
+                <button class="btn btn-secondary" onclick="exportData('staff')"       style="width:100%;padding:13px 16px;">Export Staff</button>
+                <button class="btn btn-secondary" onclick="exportData('sales')"       style="width:100%;padding:13px 16px;">Export Supplement Sales</button>
+
+                <!-- Zumba exports -->
+                <div style="padding-top:10px;border-top:1px solid var(--border);">
+                    <div style="font-size:0.82rem;font-weight:600;color:var(--warning);margin-bottom:8px;">Zumba Exports</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <button class="btn btn-secondary" onclick="exportData('zumba_members')"    style="width:100%;padding:13px 16px;">Export Zumba Members</button>
+                        <button class="btn btn-secondary" onclick="exportData('zumba_attendance')" style="width:100%;padding:13px 16px;">Export Zumba Attendance</button>
+                        <button class="btn btn-secondary" onclick="exportData('zumba_fees')"       style="width:100%;padding:13px 16px;">Export Zumba Fees</button>
+                    </div>
+                </div>
+
+                <!-- Data status -->
+                <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:4px;">
+                    <div style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">Stored Data Status</div>
+                    <div id="dataStatusList" style="font-size:0.82rem;color:var(--text-secondary);"></div>
+                    <button class="btn btn-danger btn-sm" onclick="clearAllData()" style="width:100%;margin-top:10px;">
+                        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        Clear All Data
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div><!-- /excel-grid -->
+
+</div><!-- /main-content -->
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<script>
+function toggleZumba() {
+    const menu  = document.getElementById('zumbaSubmenu');
+    const arrow = document.getElementById('zumbaArrow');
+    const open  = menu.style.maxHeight !== '0px' && menu.style.maxHeight !== '';
+    menu.style.maxHeight  = open ? '0px' : '200px';
+    arrow.style.transform = open ? '' : 'rotate(180deg)';
+}
+document.getElementById('mobileMenuBtn').addEventListener('click', () =>
+    document.getElementById('sidebar').classList.toggle('open')
+);
+</script>
+
+<!-- All Excel logic lives here -->
+<script type="module" src="excel.js"></script>
+</body>
+</html>

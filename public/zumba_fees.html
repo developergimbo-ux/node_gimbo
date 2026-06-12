@@ -1,0 +1,127 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fees</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b0b0b;color:white;font-family:'Inter',sans-serif;}
+.container{padding:30px;}
+.title{font-size:22px;font-weight:600;}
+.subtitle{color:#9ca3af;margin-top:4px;font-size:14px;}
+.filters{margin-top:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+select,input[type=text],input[type=number],input[type=date]{background:#111;border:1px solid #2a2a2a;color:white;padding:10px 14px;border-radius:8px;outline:none;font-family:inherit;}
+input[type=text]{width:220px;}
+.card{margin-top:20px;background:#151515;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden;}
+.card-header{padding:16px 20px;font-weight:500;border-bottom:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center;}
+.stat-pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
+.pill{background:#151515;border:1px solid #2a2a2a;border-radius:8px;padding:10px 18px;font-size:13px;}
+.pill span{font-weight:700;font-size:16px;display:block;margin-bottom:2px;}
+table{width:100%;border-collapse:collapse;min-width:700px;}
+.table-wrap{overflow-x:auto;}
+th{text-align:left;padding:12px 16px;font-size:11px;color:#9ca3af;background:#111;white-space:nowrap;}
+td{padding:14px 16px;border-top:1px solid #2a2a2a;font-size:13px;vertical-align:middle;}
+tr:hover{background:#1a1a1a;}
+.loading{padding:40px;text-align:center;color:#9ca3af;}
+.loader{width:14px;height:14px;border:2px solid #3b82f6;border-top:2px solid transparent;border-radius:50%;display:inline-block;animation:spin 1s linear infinite;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+.badge-paid{background:rgba(34,197,94,0.15);color:#22c55e;}
+.badge-pending{background:rgba(239,68,68,0.15);color:#ef4444;}
+.badge-overdue{background:rgba(245,158,11,0.15);color:#f59e0b;}
+.btn-mark{background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;transition:background 0.15s;}
+.btn-mark:hover{background:rgba(59,130,246,0.3);}
+.btn-mark:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;z-index:100;}
+.overlay.open{display:flex;}
+.modal{background:#161616;border:1px solid #2a2a2a;border-radius:14px;padding:24px;width:90%;max-width:420px;}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:#9ca3af;margin-bottom:20px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:12px;color:#9ca3af;margin-bottom:6px;}
+.form-group input{width:100%;padding:10px 14px;background:#111;border:1px solid #2a2a2a;color:white;border-radius:8px;outline:none;font-family:inherit;font-size:14px;}
+.form-group input:focus{border-color:#3b82f6;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;}
+.btn-primary{background:#3b82f6;color:white;}
+.btn-primary:hover{background:#2563eb;}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-cancel{background:#1e1e1e;color:#9ca3af;border:1px solid #2a2a2a;}
+.btn-cancel:hover{color:white;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:10px;padding:12px 18px;font-size:13px;transform:translateY(80px);opacity:0;transition:all 0.3s;z-index:200;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:#22c55e;color:#22c55e;}
+.toast.error{border-color:#ef4444;color:#ef4444;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div style="margin-bottom:14px;">
+    <button onclick="window.location.href='gym_owner_panel.html'" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e1e1e;color:#a0a0a0;border:1px solid #2a2a2a;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;" onmouseover="this.style.borderColor='#666'" onmouseout="this.style.borderColor='#2a2a2a'">
+      <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to Dashboard
+    </button>
+  </div>
+  <div class="title">Fees Management</div>
+  <div class="subtitle">Track and manage member payments</div>
+  <div class="stat-pills">
+    <div class="pill"><span id="sPaid" style="color:#22c55e;">—</span>Paid</div>
+    <div class="pill"><span id="sOverdue" style="color:#f59e0b;">—</span>Overdue</div>
+    <div class="pill"><span id="sPendingCount" style="color:#ef4444;">—</span>Pending Members<br><span id="sPendingAmt" style="color:#ef4444;font-size:13px;font-weight:600;">—</span><span style="font-size:11px;color:#9ca3af;"> outstanding</span></div>
+    <div class="pill"><span id="sRevenue" style="color:#3b82f6;">—</span>This Month Revenue</div>
+  </div>
+  <div class="filters">
+    <label style="color:#9ca3af;">Status:</label>
+    <select id="statusFilter">
+      <option>All</option><option>Paid</option><option>Pending</option><option>Overdue</option>
+    </select>
+    <input type="text" id="searchInput" placeholder="Search name / ID...">
+  </div>
+  <div class="card" style="margin-top:20px;">
+    <div class="card-header">Fee Records <span id="countBadge" style="font-size:12px;color:#9ca3af;"></span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>POWER ID</th><th>NAME</th><th>PACKAGE</th>
+          <th>AMOUNT</th><th>LAST PAYMENT</th><th>NEXT DUE</th>
+          <th>STATUS</th><th>ACTION</th>
+        </tr></thead>
+        <tbody id="tableBody">
+          <tr><td colspan="8" class="loading"><span class="loader"></span>Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Mark as Paid Modal -->
+<div class="overlay" id="payModal">
+  <div class="modal">
+    <div class="modal-title">Mark as Paid</div>
+    <div class="modal-sub" id="modalSub">Member: —</div>
+    <div class="form-group">
+      <label>Amount (₹)</label>
+      <input type="number" id="modalAmount" placeholder="e.g. 1500" min="0">
+    </div>
+    <div class="form-group">
+      <label>Payment Date</label>
+      <input type="date" id="modalDate">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="confirmPayBtn" onclick="confirmPay()">Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="zumba_fees.js"></script>
+</body>
+</html>

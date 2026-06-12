@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Exercise Plan Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0b0b0b;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  padding: 30px;
+  min-height: 100vh;
+}
+
+/* BACK BUTTON */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  color: #e5e7eb;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.back-btn:hover { background: #222; }
+.back-btn svg { width: 16px; height: 16px; }
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.title { font-size: 24px; font-weight: 600; }
+.subtitle { font-size: 14px; color: #9ca3af; margin-top: 5px; }
+
+/* CARD */
+.card {
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #2a2a2a;
+}
+.card-title { font-size: 15px; font-weight: 500; color: #e5e7eb; }
+.card-body { padding: 20px; }
+
+/* FORM GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.span-2 { grid-column: span 2; }
+.span-3 { grid-column: span 3; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 12px; color: #9ca3af; font-weight: 500; }
+.field input,
+.field select {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: white;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.field input:focus,
+.field select:focus { border-color: #f97316; }
+.field input::placeholder { color: #4b5563; }
+.field select option { background: #1a1a1a; }
+.field input[readonly] { color: #9ca3af; cursor: default; }
+
+/* POWER ID ROW */
+.power-id-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* BUTTONS */
+.btn-fetch {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  transition: background 0.15s;
+  height: 42px;
+}
+.btn-fetch:hover { background: #374151; }
+.btn-fetch:disabled { opacity: 0.5; cursor: not-allowed; }
+.spinner {
+  width: 12px; height: 12px;
+  border: 2px solid #4b5563;
+  border-top-color: #9ca3af;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.btn-fetch.loading .spinner { display: block; }
+.btn-fetch.loading .fetch-icon { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-primary {
+  background: #f97316;
+  border: none;
+  color: white;
+  padding: 11px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: #ea6c08; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-whatsapp {
+  background: #25d366;
+  border: none;
+  color: white;
+  padding: 11px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.btn-whatsapp:hover { background: #22c45c; }
+
+.btn-reset {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #9ca3af;
+  padding: 11px 22px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.btn-reset:hover { background: #374151; color: white; }
+
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+
+/* ALERTS */
+.alert {
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  margin-top: 16px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+.alert.success { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: #4ade80; }
+.alert.visible { display: flex; }
+
+/* MEMBER BADGE */
+.member-badge {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #4ade80;
+  margin-top: 12px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.member-badge.visible { display: flex; }
+
+/* GOAL BADGE */
+.goal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.goal-badge.muscle_gain { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+.goal-badge.fat_loss    { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+.goal-badge.maintenance { background: rgba(34,197,94,0.1);   color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+.goal-badge.endurance   { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+.goal-badge.strength    { background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.25); }
+
+/* OUTPUT */
+#output { display: none; }
+#output.visible { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card {
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 20px;
+}
+.stat-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.stat-value { font-size: 26px; font-weight: 600; line-height: 1; }
+.stat-value.orange  { color: #fb923c; }
+.stat-value.green   { color: #4ade80; }
+.stat-value.blue    { color: #60a5fa; }
+.stat-value.purple  { color: #c084fc; font-size: 18px; }
+.stat-sub { font-size: 12px; color: #6b7280; margin-top: 5px; }
+
+/* WEEKLY SCHEDULE GRID */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.day-card {
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.day-card.rest-day { border-color: #1f2937; opacity: 0.7; }
+.day-card.active-day { border-color: #f97316; }
+.day-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.day-name { font-size: 12px; font-weight: 600; color: #e5e7eb; text-transform: uppercase; letter-spacing: 0.06em; }
+.day-focus { font-size: 10px; color: #9ca3af; }
+.day-body { padding: 10px 12px; }
+.exercise-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.exercise-item:last-child { border-bottom: none; }
+.ex-dot { width: 5px; height: 5px; border-radius: 50%; background: #f97316; margin-top: 6px; flex-shrink: 0; }
+.ex-dot.rest { background: #374151; }
+.ex-name { font-size: 12px; font-weight: 500; color: #e5e7eb; }
+.ex-detail { font-size: 10px; color: #6b7280; margin-top: 2px; }
+.rest-label {
+  font-size: 12px;
+  color: #374151;
+  text-align: center;
+  padding: 20px 0;
+  font-weight: 500;
+}
+
+/* DAY CARD HEADER ACCENT */
+.active-day .day-header { background: rgba(249,115,22,0.07); }
+.rest-day .day-header { background: rgba(31,41,55,0.5); }
+
+/* EXERCISE DETAILS SECTION */
+.exercise-list { margin-bottom: 20px; }
+.ex-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fb923c;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid #1f2937;
+}
+.ex-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  align-items: center;
+  font-size: 13px;
+}
+.ex-row:last-child { border-bottom: none; }
+.ex-row:hover { background: rgba(255,255,255,0.02); }
+.ex-row-header {
+  font-size: 10px;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 20px;
+  border-bottom: 1px solid #1f2937;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+.ex-row-name { font-weight: 500; color: #e5e7eb; }
+.ex-row-sets { color: #60a5fa; font-weight: 500; text-align: center; }
+.ex-row-reps { color: #4ade80; font-weight: 500; text-align: center; }
+.ex-row-rest { color: #9ca3af; text-align: center; }
+.ex-tip { font-size: 11px; color: #6b7280; margin-top: 3px; }
+
+/* TOTAL BAR */
+.total-bar {
+  background: rgba(249,115,22,0.06);
+  border: 1px solid rgba(249,115,22,0.15);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.total-label { font-size: 12px; color: #6b7280; letter-spacing: 0.05em; text-transform: uppercase; }
+.total-value { font-size: 36px; font-weight: 700; color: #f97316; }
+.total-value span { font-size: 16px; color: #6b7280; margin-left: 4px; }
+
+/* WARM-UP / COOL-DOWN */
+.protocol-card {
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 16px;
+}
+.protocol-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.protocol-title.warmup { color: #fb923c; }
+.protocol-title.cooldown { color: #60a5fa; }
+.protocol-item {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.protocol-item:last-child { border-bottom: none; }
+.protocol-item span { color: white; font-weight: 500; }
+
+/* AI LOADING SPINNER */
+.ai-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid #374151;
+  border-top-color: #f97316;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+/* WEEK DAY COMPACT (mobile) */
+@media (max-width: 1100px) {
+  .week-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 768px) {
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .span-2 { grid-column: span 1; }
+  .span-3 { grid-column: span 2; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .week-grid { grid-template-columns: 1fr 1fr; }
+  .ex-row { grid-template-columns: 2fr 1fr 1fr; }
+  .ex-row-header { grid-template-columns: 2fr 1fr 1fr; }
+  .ex-row .ex-row-rest { display: none; }
+  .ex-row-header > :last-child { display: none; }
+  body { padding: 16px; }
+  .power-id-row { grid-template-columns: 1fr; }
+  .total-bar { flex-direction: column; gap: 8px; text-align: center; }
+}
+@media (max-width: 480px) {
+  .grid-3 { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .week-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<button class="back-btn" onclick="history.back()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="15 18 9 12 15 6"></polyline>
+  </svg>
+  Back to Dashboard
+</button>
+
+<div class="header">
+  <div>
+    <div class="title" id="pageTitle">Exercise Plan Generator</div>
+    <div class="subtitle">Generate personalised workout plans based on member fitness goals &amp; gym hours</div>
+  </div>
+</div>
+
+<!-- MEMBER LOOKUP -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Member Lookup</div>
+  </div>
+  <div class="card-body">
+    <div class="power-id-row">
+      <div class="field">
+        <label>Power ID</label>
+        <input type="text" id="powerId" placeholder="e.g. P001" autocomplete="off"
+               onkeydown="if(event.key==='Enter')fetchMemberById()" />
+      </div>
+      <button class="btn-fetch" id="fetchBtn" onclick="fetchMemberById()">
+        <svg class="fetch-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <div class="spinner"></div>
+        Fetch Member
+      </button>
+    </div>
+    <div class="member-badge" id="memberBadge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+      <span id="memberBadgeText">Member loaded</span>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT PROFILE -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Client Profile</div>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+
+      <!-- Row 1 -->
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="Auto-filled from Power ID" readonly />
+      </div>
+      <div class="field">
+        <label>Phone (WhatsApp) <span id="phoneLabelHint" style="color:#4b5563;font-weight:400;font-size:11px;"></span></label>
+        <input type="tel" id="phone" placeholder="Auto-filled from Power ID" />
+        <div id="parentPhoneRow" style="display:none;margin-top:6px;">
+          <label style="font-size:11px;color:#6b7280;">Use parent/guardian number instead?</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <span id="parentPhoneDisplay" style="font-size:13px;color:#9ca3af;"></span>
+            <button type="button" onclick="useParentPhone()" style="background:#1f2937;border:1px solid #374151;color:#60a5fa;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;">Use this</button>
+            <button type="button" onclick="useMemberPhone()" style="background:#1f2937;border:1px solid #374151;color:#9ca3af;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;">Use member's</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Age (years)</label>
+        <input type="number" id="age" placeholder="e.g. 28" min="10" max="80" />
+      </div>
+
+      <!-- Row 2 -->
+      <div class="field">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Weight (kg)</label>
+        <input type="number" id="weight" placeholder="e.g. 72" min="30" max="300" />
+      </div>
+      <div class="field">
+        <label>Height (cm)</label>
+        <input type="number" id="height" placeholder="e.g. 172" min="100" max="250" />
+      </div>
+
+      <!-- Row 3 -->
+      <div class="field">
+        <label>Fitness Goal <span id="goalBadgeEl" style="margin-left:6px;"></span></label>
+        <select id="goal">
+          <option value="">Select goal</option>
+          <option value="muscle_gain">Muscle Gain / Bulking</option>
+          <option value="fat_loss">Fat Loss / Cutting</option>
+          <option value="maintenance">Maintenance / Tone</option>
+          <option value="strength">Strength Building</option>
+          <option value="endurance">Endurance / Stamina</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Experience Level</label>
+        <select id="experience">
+          <option value="">Select level</option>
+          <option value="beginner" selected>Beginner (0–6 months)</option>
+          <option value="intermediate">Intermediate (6 months–2 years)</option>
+          <option value="advanced">Advanced (2+ years)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Preferred Split</label>
+        <select id="split">
+          <option value="auto">Auto (AI decides based on hours)</option>
+          <option value="full_body" selected>Full Body</option>
+          <option value="upper_lower">Upper / Lower</option>
+          <option value="push_pull_legs">Push / Pull / Legs</option>
+          <option value="bro_split">Bro Split (1 muscle/day)</option>
+        </select>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="field">
+        <label>Daily Gym Hours Available</label>
+        <select id="gymHours">
+          <option value="">Select duration</option>
+          <option value="0.5">30 minutes</option>
+          <option value="1">1 hour</option>
+          <option value="1.5" selected>1.5 hours</option>
+          <option value="2">2 hours</option>
+          <option value="2.5">2.5 hours</option>
+          <option value="3">3+ hours</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Days Per Week in Gym</label>
+        <select id="gymDays">
+          <option value="">Select frequency</option>
+          <option value="3">3 days/week</option>
+          <option value="4">4 days/week</option>
+          <option value="5">5 days/week</option>
+          <option value="6" selected>6 days/week</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Injuries / Avoid</label>
+        <input type="text" id="injuries" placeholder="e.g. bad knees, lower back pain" />
+      </div>
+
+    </div>
+
+    <div id="errorBox" class="alert error"></div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="generateBtn" onclick="generatePlan()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+        Generate Exercise Plan
+      </button>
+      <button class="btn-reset" onclick="resetForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+        </svg>
+        Reset
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ───── OUTPUT ───── -->
+<div id="output">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Weekly Volume</div>
+      <div class="stat-value orange" id="statVolume">—</div>
+      <div class="stat-sub">total sets/week</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Days</div>
+      <div class="stat-value green" id="statDays">—</div>
+      <div class="stat-sub" id="statDaysSub">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Daily Duration</div>
+      <div class="stat-value blue" id="statDuration">—</div>
+      <div class="stat-sub">mins per session</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Split Type</div>
+      <div class="stat-value purple" id="statSplit">—</div>
+      <div class="stat-sub" id="statSplitSub">—</div>
+    </div>
+  </div>
+
+  <!-- WEEKLY SCHEDULE -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📅 Weekly Schedule</div>
+    </div>
+    <div style="padding:20px;">
+      <div class="week-grid" id="weekGrid"></div>
+    </div>
+  </div>
+
+  <!-- DETAILED EXERCISE TABLE -->
+  <div class="card exercise-list" id="exerciseTable">
+    <!-- injected by JS -->
+  </div>
+
+  <!-- WARM-UP / COOL-DOWN -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:0;" id="protocolSection">
+    <div class="protocol-card">
+      <div class="protocol-title warmup">🔥 Warm-Up Protocol (Every Session)</div>
+      <div id="warmupList"></div>
+    </div>
+    <div class="protocol-card">
+      <div class="protocol-title cooldown">❄️ Cool-Down Protocol (Every Session)</div>
+      <div id="cooldownList"></div>
+    </div>
+  </div>
+
+  <!-- TOTAL BAR -->
+  <div class="total-bar" style="margin-top:16px;">
+    <div>
+      <div class="total-label">Estimated Weekly Gym Time</div>
+      <div class="stat-sub" id="totalNote" style="margin-top:4px;"></div>
+    </div>
+    <div class="total-value" id="totalHours">— <span>hrs/week</span></div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="btn-row" style="margin-top:20px;margin-bottom:40px;">
+    <button class="btn-whatsapp" onclick="sendWhatsApp()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+      Send to WhatsApp + PDF
+    </button>
+    <button class="btn-reset" style="background:#1e3a5f;border-color:#2563eb;color:#60a5fa;" onclick="downloadPDF()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download PDF
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<script type="module" src="exercise_chart.js"></script>
+</body>
+</html>
