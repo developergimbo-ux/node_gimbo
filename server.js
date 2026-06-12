@@ -18,9 +18,9 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 const ROLE_EMAILS = {
-  owner:  ['owner1@gmail.com'],
+  owner: ['owner1@gmail.com'],
   member: ['member1@gmail.com'],
-  zumba:  ['zumba1@gmail.com']
+  zumba: ['zumba1@gmail.com']
 };
 
 function getRole(email) {
@@ -33,33 +33,25 @@ function getRole(email) {
 app.post('/api/login', async (req, res) => {
   const { email, password, role: selectedRole } = req.body;
   if (!email || !password || !selectedRole) return res.status(400).json({ error: 'Missing fields' });
-
   const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
   if (!FIREBASE_API_KEY) return res.status(500).json({ error: 'Server not configured.' });
-
   try {
-    const firebaseRes = await fetch(
+    const r = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, returnSecureToken: true }) }
     );
-    const data = await firebaseRes.json();
-    if (data.error) return res.status(401).json({ error: 'Invalid email or password.' });
-
+    const d = await r.json();
+    if (d.error) return res.status(401).json({ error: 'Invalid email or password.' });
     const emailRole = getRole(email);
-    if (emailRole !== null && emailRole !== selectedRole) {
-      return res.status(403).json({ error: `Invalid login for ${selectedRole} section.` });
-    }
-
+    if (emailRole && emailRole !== selectedRole) return res.status(403).json({ error: 'Wrong section.' });
     const redirects = { owner: '/gym_owner_panel.html', member: '/Members_Section.html', zumba: '/Zumba_Members_Section.html' };
-    res.json({ success: true, role: selectedRole, redirectUrl: redirects[selectedRole] || '/' });
-
+    res.json({ success: true, redirectUrl: redirects[selectedRole] || '/' });
   } catch (e) {
-    res.status(500).json({ error: 'Server error. Please try again.' });
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 
 app.get('/ping', (req, res) => res.json({ status: 'ok' }));
-app.get('/', (req, res) => res.status(200).send('OK'));
-
-app.listen(PORT, () => console.log(`✅ Running on port ${PORT}`));
+app.get('/', (req, res) => res.send('OK'));
+app.listen(PORT, () => console.log(`Running on ${PORT}`));
